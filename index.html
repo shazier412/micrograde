@@ -1,69 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!--
-      Preliminary Microbiology Grade Calculator
-      - Single-file static page (HTML + CSS + JS).
-      - All computation is client-side; no data leaves the browser.
-      - Grading rules:
-          * Lecture: Exams 1–3 (100 each), Final (100), EC ≤10.
-            If Final > lowest of Exams 1–3, drop that lowest exam and count Final twice.
-          * Lab: 10 quizzes (5 pts each) with lowest one dropped → best 9 = 45 max,
-            Task 5, Midterm 50, Final 50, EC ≤5.
-          * Course thresholds: A 493, B 438, C 383, D 355.
-      - UI shows: which lecture exam was replaced, which lab quiz was dropped,
-        lecture/lab totals, course total, letter, and non-negative points needed to next thresholds (shown to 2 decimals).
-    -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Course Grade Calculator (Dracula)</title>
-
+    <title>A&P 2 Grade Calculator</title>
     <style>
         :root{
-            /* Dracula palette tokens used across the UI */
-            --bg: #282a36;       /* page background */
-            --bg-soft: #2f3242;  /* softer panel background */
-            --line: #44475a;     /* borders and separators */
-            --text: #f8f8f2;     /* primary text */
-            --muted: #bfbfd6;    /* secondary text */
-            --comment: #6272a4;  /* hint text */
-            --cyan: #8be9fd;     /* accent cyan */
-            --green: #50fa7b;    /* success */
-            --orange: #ffb86c;   /* warn */
-            --pink: #ff79c6;     /* unused accent */
-            --purple: #bd93f9;   /* primary accent */
-            --red: #ff5555;      /* error */
-            --yellow: #f1fa8c;   /* unused accent */
-            --focus-ring: #8be9fd88; /* focus outline */
-            --card: #1f202b;     /* card background */
+            --bg: #282a36;
+            --bg-soft: #2f3242;
+            --line: #44475a;
+            --text: #f8f8f2;
+            --muted: #bfbfd6;
+            --comment: #6272a4;
+            --cyan: #8be9fd;
+            --green: #50fa7b;
+            --orange: #ffb86c;
+            --purple: #bd93f9;
+            --red: #ff5555;
+            --focus-ring: #8be9fd88;
+            --card: #1f202b;
         }
 
-        /* Global layout and typography */
         *{box-sizing:border-box}
-        html,body{height:100%}
+        html,body{min-height:100%}
         body{
             margin:0; background:var(--bg); color:var(--text);
-            font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+            font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
         }
 
-        /* Page header with gradient and title */
         header{
             padding: 20px 16px; border-bottom:1px solid var(--line);
             background: linear-gradient(180deg, var(--bg-soft), var(--bg) 70%);
         }
-        /* Title styling: bold system font, Dracula purple */
-        h1{margin:0 0 6px; font-size: clamp(20px,3.2vw,28px); font-weight:800; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial,sans-serif; color: var(--purple);}
+        h1{margin:0 0 6px; font-size: clamp(20px,3.2vw,28px); font-weight:800; color: var(--purple);}
         .sub{color:var(--comment); font-size:14px}
 
-        /* Content container and CSS grid for responsive cards */
-        .wrap{max-width:1100px; margin: 0 auto; padding: 16px}
-        .grid{
-            display:grid; gap:16px;
-            grid-template-columns: repeat(12, 1fr);
-            align-items:start;
-        }
+        .wrap{max-width:1200px; margin: 0 auto; padding: 16px}
+        .grid{display:grid; gap:16px; grid-template-columns: repeat(12, 1fr); align-items:start;}
 
-        /* Card styling; becomes two columns on >=900px */
         .card{
             grid-column: span 12;
             background: var(--card);
@@ -72,53 +46,45 @@
             box-shadow: 0 6px 20px rgba(0,0,0,.25);
         }
         @media (min-width: 900px){
-            .card.left{grid-column: span 6}
-            .card.right{grid-column: span 6}
+            .card.half{grid-column: span 6}
             .card.full{grid-column: span 12}
         }
 
-        /* Section headings and hints */
-        .card h2{margin:0 0 10px; font-size:18px}
+        .card h2{margin:0 0 10px; font-size:18px; color: var(--cyan);}
         .hint{color:var(--muted); font-size:13px; margin: 4px 0 10px}
 
-        /* Label-input rows for numeric fields */
         .row{display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center; margin:6px 0}
         .row label{font-size:14px}
 
-        /* Numeric input appearance and focus */
         input[type="number"]{
-            width:120px; padding:8px 10px; border-radius:8px; border:1px solid var(--line);
+            width:100px; padding:8px 10px; border-radius:8px; border:1px solid var(--line);
             background: var(--bg-soft); color: var(--text);
             outline:none; font-size:14px;
         }
         input[type="number"]:focus{border-color:var(--purple); box-shadow:0 0 0 3px var(--focus-ring)}
 
-        /* Boxed callouts for explanations and groups */
         .box{
             background: var(--bg-soft);
             border:1px solid var(--line);
             border-radius:10px; padding:10px; margin-top:10px; font-size:14px
         }
 
-        /* Totals pills row */
         .totals{display:flex; flex-wrap:wrap; gap:10px; margin-top:8px}
         .pill{
             border:1px solid var(--line); background:var(--bg-soft); color:var(--text);
             padding:6px 10px; border-radius:999px; font-size:13px
         }
 
-        /* Color helpers for current letter grade */
-        .ok{color: var(--green)}
-        .warn{color: var(--orange)}
-        .bad{color: var(--red)}
-        .good{color: var(--cyan)}
+        .grade-A{color: var(--green)}
+        .grade-B{color: var(--cyan)}
+        .grade-C{color: var(--orange)}
+        .grade-D{color: var(--orange)}
+        .grade-F{color: var(--red)}
 
-        /* Footer text and link color */
         .footer{padding:14px; text-align:center; color:var(--comment); font-size:12px}
         a{color:var(--cyan)}
 
-        /* Buttons: primary and secondary */
-        .btns{display:flex; gap:10px; margin-top:10px}
+        .btns{display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;}
         button{
             background:var(--purple); color:var(--bg);
             border:none; padding:10px 14px; border-radius:10px; font-weight:600; cursor:pointer;
@@ -126,372 +92,368 @@
         button.secondary{background:transparent; color:var(--text); border:1px solid var(--line)}
         button:focus{outline:none; box-shadow:0 0 0 3px var(--focus-ring)}
 
-        /* Monospace for technical messages */
-        .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
-
-        /* Quiz grid sizing to prevent overlap/overhang.
-           - auto-fit creates as many columns as will fit
-           - minmax ensures each input has a reasonable minimum width
-           - width:100% allows inputs to fill their grid cell */
-        .quiz-grid{ gap:8px; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); }
-        .quiz-grid input[type="number"]{ width:100%; min-width:0; padding:6px 8px; }
+        .section-title{font-weight:600; margin:12px 0 8px; color: var(--purple); font-size:15px;}
+        
+        .quiz-grid, .connect-grid{
+            display:grid; gap:8px; 
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            margin-top:8px;
+        }
+        .quiz-grid input, .connect-grid input{width:100%; min-width:0; padding:6px 8px;}
+        
+        .summary-box{
+            background: var(--bg-soft);
+            border:2px solid var(--purple);
+            border-radius:12px; 
+            padding:16px; 
+            margin-top:12px;
+            text-align:center;
+        }
+        .grade-display{
+            font-size:48px; 
+            font-weight:800; 
+            margin:10px 0;
+        }
+        .percent-display{
+            font-size:24px;
+            color: var(--muted);
+        }
     </style>
 </head>
 <body>
 <header>
     <div class="wrap">
-        <!-- Page title and disclaimer brief -->
-        <h1>Preliminary Microbiology Grade Calculator</h1>
-        <div class="sub">Your official letter grade will be calculated by your lecture instructor.</div>
+        <h1>Anatomy & Physiology 2 Grade Calculator</h1>
+        <div class="sub">Enter your scores to calculate your current grade and see what you need for your target letter grade.</div>
     </div>
 </header>
 
 <main class="wrap">
     <section class="grid">
-        <!-- LECTURE CARD: handles exams 1–3, final, and lecture extra credit -->
-        <article class="card left" aria-labelledby="lectureTitle">
-            <h2 id="lectureTitle">Lecture</h2>
-            <div class="hint">Exams are 0–100 each. Extra credit is not guaranteed.</div>
-
-            <!-- Individual lecture inputs -->
-            <div class="row"><label for="ex1">Exam 1</label><input id="ex1" type="number" min="0" max="100" step="1" value="" inputmode="decimal"></div>
-            <div class="row"><label for="ex2">Exam 2</label><input id="ex2" type="number" min="0" max="100" step="1" value="" inputmode="decimal"></div>
-            <div class="row"><label for="ex3">Exam 3</label><input id="ex3" type="number" min="0" max="100" step="1" value="" inputmode="decimal"></div>
-            <div class="row"><label for="finalLec">Final Exam</label><input id="finalLec" type="number" min="0" max="100" step="1" value="" inputmode="decimal"></div>
-            <div class="row"><label for="ecLec">Extra Credit (If provided)</label><input id="ecLec" type="number" min="0" max="10" step="1" value="" inputmode="decimal"></div>
-
-            <!-- Replacement rule status -->
-            <div class="box" id="lectureExplain">
-                Replacement: <span class="mono" id="lecReplaceMsg">—</span>
+        <!-- Unit Tests Card -->
+        <article class="card half">
+            <h2>Unit Tests (45% total)</h2>
+            <div class="hint">Each test worth 100 points, 15% of final grade</div>
+            
+            <div class="row">
+                <label for="test1">Unit Test 1</label>
+                <input id="test1" type="number" min="0" max="100" step="0.01" inputmode="decimal">
+            </div>
+            <div class="row">
+                <label for="test2">Unit Test 2</label>
+                <input id="test2" type="number" min="0" max="100" step="0.01" inputmode="decimal">
+            </div>
+            <div class="row">
+                <label for="test3">Unit Test 3</label>
+                <input id="test3" type="number" min="0" max="100" step="0.01" inputmode="decimal">
             </div>
 
-            <!-- Running total display for lecture -->
-            <div style="margin-top:12px; padding:10px; background:var(--bg-soft); border:1px solid var(--line); border-radius:8px; text-align:center; font-size:18px; font-weight:600">
-                Lecture: <span id="lecRunning">0</span> / 400 (<span id="lecPercent">0.00</span>%)
-            </div>
-
-            <!-- Reset for lecture-only inputs -->
-            <div class="btns">
-                <button id="resetLecture" class="secondary" type="button">Reset lecture</button>
-            </div>
-        </article>
-
-        <!-- LAB CARD: handles 10 quizzes (drop lowest), task, midterm, final, lab extra credit -->
-        <article class="card right" aria-labelledby="labTitle">
-            <h2 id="labTitle">Lab</h2>
-            <div class="hint">Quizzes are 0–5. One quiz is dropped. Task points are 0–5. Midterm and Final are 0–50. Extra credit is not guaranteed.</div>
-
-            <!-- Quizzes grid (10 inputs). Lowest one will be dropped in calculation. -->
             <div class="box">
-                <strong>Lab Quizzes (10×, 0–5)</strong>
-                <div class="grid quiz-grid" style="margin-top:8px">
-                    <input aria-label="Quiz 1" id="q1" type="number" min="0" max="5" step="1" inputmode="decimal">
-                    <input aria-label="Quiz 2" id="q2" type="number" min="0" max="5" step="1" inputmode="decimal">
-                    <input aria-label="Quiz 3" id="q3" type="number" min="0" max="5" step="1" inputmode="decimal">
-                    <input aria-label="Quiz 4" id="q4" type="number" min="0" max="5" step="1" inputmode="decimal">
-                    <input aria-label="Quiz 5" id="q5" type="number" min="0" max="5" step="1" inputmode="decimal">
-                    <input aria-label="Quiz 6" id="q6" type="number" min="0" max="5" step="1" inputmode="decimal">
-                    <input aria-label="Quiz 7" id="q7" type="number" min="0" max="5" step="1" inputmode="decimal">
-                    <input aria-label="Quiz 8" id="q8" type="number" min="0" max="5" step="1" inputmode="decimal">
-                    <input aria-label="Quiz 9" id="q9" type="number" min="0" max="5" step="1" inputmode="decimal">
-                    <input aria-label="Quiz 10" id="q10" type="number" min="0" max="5" step="1" inputmode="decimal">
-                </div>
-                <!-- Displays which quiz was dropped (index and points) -->
-                <div class="hint" id="quizDropMsg" style="margin-top:8px">Dropped quiz: —</div>
-            </div>
-
-            <!-- Other lab components -->
-            <div class="row"><label for="task">Task Points (0–5)</label><input id="task" type="number" min="0" max="5" step="1" inputmode="decimal"></div>
-            <div class="row"><label for="mid">Midterm (0–50)</label><input id="mid" type="number" min="0" max="50" step="1" inputmode="decimal"></div>
-            <div class="row"><label for="fin">Final (0–50)</label><input id="fin" type="number" min="0" max="50" step="1" inputmode="decimal"></div>
-            <div class="row"><label for="ecLab">Extra Credit (If provided)</label><input id="ecLab" type="number" min="0" max="5" step="1" inputmode="decimal"></div>
-
-            <!-- Lab component breakdown -->
-            <div class="totals">
-                <div class="pill">Lab quizzes (best 9): <span id="quizBest">0</span> / 45</div>
-                <div class="pill">Task: <span id="taskOut">0</span> / 5</div>
-                <div class="pill">Midterm: <span id="midOut">0</span> / 50</div>
-                <div class="pill">Final: <span id="finOut">0</span> / 50</div>
-                <div class="pill">Lab EC: <span id="labEC">0</span> / 5</div>
-            </div>
-
-            <!-- Running total display for lab -->
-            <div style="margin-top:12px; padding:10px; background:var(--bg-soft); border:1px solid var(--line); border-radius:8px; text-align:center; font-size:18px; font-weight:600">
-                Lab: <span id="labRunning">0</span> / 150 (<span id="labPercent">0.00</span>%)
-            </div>
-
-            <!-- Reset for lab-only inputs -->
-            <div class="btns">
-                <button id="resetLab" class="secondary" type="button">Reset lab</button>
+                <strong>Unit Tests Contribution:</strong> <span id="testContrib">0.00</span>%
             </div>
         </article>
 
-        <!-- OVERALL CARD: aggregates lecture and lab into course totals and thresholds -->
-        <article class="card full" aria-labelledby="overallTitle">
-            <h2 id="overallTitle">Overall</h2>
-
-            <!-- Course total and current letter grade -->
-            <div class="totals">
-                <div class="pill">Course total: <span id="courseTotal">0</span> / 550 (<span id="coursePercent">0.00</span>%)</div>
-                <div class="pill">Letter grade: <span id="letter" class="good">F</span></div>
+        <!-- Final Exam Card -->
+        <article class="card half">
+            <h2>Final Exam (30%)</h2>
+            <div class="hint">120 points total, 30% of final grade</div>
+            
+            <div class="row">
+                <label for="final">Final Exam</label>
+                <input id="final" type="number" min="0" max="120" step="0.01" inputmode="decimal">
             </div>
 
-            <!-- Non-negative "points needed to next thresholds" -->
-            <div class="box" id="targetsBox">
-                <div style="margin-bottom:6px"><strong>Points needed for next thresholds</strong></div>
-                <div id="targets" class="mono">—</div>
+            <div class="box">
+                <strong>Final Exam Contribution:</strong> <span id="finalContrib">0.00</span>%
             </div>
 
-            <!-- Reset all inputs -->
+            <h2 style="margin-top:20px;">Participation (3%)</h2>
+            <div class="hint">28 points max, subtract 1 per absence</div>
+            
+            <div class="row">
+                <label for="absences">Days Absent</label>
+                <input id="absences" type="number" min="0" max="28" step="1" value="0" inputmode="decimal">
+            </div>
+
+            <div class="box">
+                <strong>Participation Points:</strong> <span id="partPoints">28</span> / 28<br>
+                <strong>Participation Contribution:</strong> <span id="partContrib">3.00</span>%
+            </div>
+        </article>
+
+        <!-- Quizzes Card -->
+        <article class="card full">
+            <h2>Quizzes (15% total)</h2>
+            <div class="hint">19 quizzes, 100 points each. Enter scores for completed quizzes.</div>
+            
+            <div class="quiz-grid">
+                <input aria-label="Quiz 1" id="quiz1" type="number" min="0" max="100" step="0.01" placeholder="Quiz 1" inputmode="decimal">
+                <input aria-label="Quiz 2" id="quiz2" type="number" min="0" max="100" step="0.01" placeholder="Quiz 2" inputmode="decimal">
+                <input aria-label="Quiz 3" id="quiz3" type="number" min="0" max="100" step="0.01" placeholder="Quiz 3" inputmode="decimal">
+                <input aria-label="Quiz 4" id="quiz4" type="number" min="0" max="100" step="0.01" placeholder="Quiz 4" inputmode="decimal">
+                <input aria-label="Quiz 5" id="quiz5" type="number" min="0" max="100" step="0.01" placeholder="Quiz 5" inputmode="decimal">
+                <input aria-label="Quiz 6" id="quiz6" type="number" min="0" max="100" step="0.01" placeholder="Quiz 6" inputmode="decimal">
+                <input aria-label="Quiz 7" id="quiz7" type="number" min="0" max="100" step="0.01" placeholder="Quiz 7" inputmode="decimal">
+                <input aria-label="Quiz 8" id="quiz8" type="number" min="0" max="100" step="0.01" placeholder="Quiz 8" inputmode="decimal">
+                <input aria-label="Quiz 9" id="quiz9" type="number" min="0" max="100" step="0.01" placeholder="Quiz 9" inputmode="decimal">
+                <input aria-label="Quiz 10" id="quiz10" type="number" min="0" max="100" step="0.01" placeholder="Quiz 10" inputmode="decimal">
+                <input aria-label="Quiz 11" id="quiz11" type="number" min="0" max="100" step="0.01" placeholder="Quiz 11" inputmode="decimal">
+                <input aria-label="Quiz 12" id="quiz12" type="number" min="0" max="100" step="0.01" placeholder="Quiz 12" inputmode="decimal">
+                <input aria-label="Quiz 13" id="quiz13" type="number" min="0" max="100" step="0.01" placeholder="Quiz 13" inputmode="decimal">
+                <input aria-label="Quiz 14" id="quiz14" type="number" min="0" max="100" step="0.01" placeholder="Quiz 14" inputmode="decimal">
+                <input aria-label="Quiz 15" id="quiz15" type="number" min="0" max="100" step="0.01" placeholder="Quiz 15" inputmode="decimal">
+                <input aria-label="Quiz 16" id="quiz16" type="number" min="0" max="100" step="0.01" placeholder="Quiz 16" inputmode="decimal">
+                <input aria-label="Quiz 17" id="quiz17" type="number" min="0" max="100" step="0.01" placeholder="Quiz 17" inputmode="decimal">
+                <input aria-label="Quiz 18" id="quiz18" type="number" min="0" max="100" step="0.01" placeholder="Quiz 18" inputmode="decimal">
+                <input aria-label="Quiz 19" id="quiz19" type="number" min="0" max="100" step="0.01" placeholder="Quiz 19" inputmode="decimal">
+            </div>
+
+            <div class="box" style="margin-top:12px;">
+                <strong>Quiz Average:</strong> <span id="quizAvg">0.00</span>%<br>
+                <strong>Quizzes Completed:</strong> <span id="quizCount">0</span> / 19<br>
+                <strong>Quiz Contribution:</strong> <span id="quizContrib">0.00</span>%
+            </div>
+        </article>
+
+        <!-- Connect Assignments Card -->
+        <article class="card full">
+            <h2>Connect Assignments (7% total)</h2>
+            <div class="hint">26 assignments, 100 points each. Enter scores for completed assignments.</div>
+            
+            <div class="section-title">Chapters & Practice:</div>
+            <div class="connect-grid">
+                <input aria-label="Ch 18" id="c1" type="number" min="0" max="100" step="0.01" placeholder="Ch 18" inputmode="decimal">
+                <input aria-label="Ch 19" id="c2" type="number" min="0" max="100" step="0.01" placeholder="Ch 19" inputmode="decimal">
+                <input aria-label="Ch 20" id="c3" type="number" min="0" max="100" step="0.01" placeholder="Ch 20" inputmode="decimal">
+                <input aria-label="Blood Hist" id="c4" type="number" min="0" max="100" step="0.01" placeholder="Blood Hist" inputmode="decimal">
+                <input aria-label="Heart Anat" id="c5" type="number" min="0" max="100" step="0.01" placeholder="Heart Anat" inputmode="decimal">
+                <input aria-label="Blood Vess" id="c6" type="number" min="0" max="100" step="0.01" placeholder="Blood Vess" inputmode="decimal">
+                <input aria-label="APR U1" id="c7" type="number" min="0" max="100" step="0.01" placeholder="APR U1" inputmode="decimal">
+                <input aria-label="Ch 21" id="c8" type="number" min="0" max="100" step="0.01" placeholder="Ch 21" inputmode="decimal">
+                <input aria-label="Ch 17" id="c9" type="number" min="0" max="100" step="0.01" placeholder="Ch 17" inputmode="decimal">
+                <input aria-label="Ch 22" id="c10" type="number" min="0" max="100" step="0.01" placeholder="Ch 22" inputmode="decimal">
+                <input aria-label="Endo Anat" id="c11" type="number" min="0" max="100" step="0.01" placeholder="Endo Anat" inputmode="decimal">
+                <input aria-label="Resp Anat" id="c12" type="number" min="0" max="100" step="0.01" placeholder="Resp Anat" inputmode="decimal">
+                <input aria-label="APR Lab 5" id="c13" type="number" min="0" max="100" step="0.01" placeholder="APR Lab 5" inputmode="decimal">
+                <input aria-label="APR U2" id="c14" type="number" min="0" max="100" step="0.01" placeholder="APR U2" inputmode="decimal">
+                <input aria-label="Ch 23" id="c15" type="number" min="0" max="100" step="0.01" placeholder="Ch 23" inputmode="decimal">
+                <input aria-label="Ch 24" id="c16" type="number" min="0" max="100" step="0.01" placeholder="Ch 24" inputmode="decimal">
+                <input aria-label="Ch 25" id="c17" type="number" min="0" max="100" step="0.01" placeholder="Ch 25" inputmode="decimal">
+                <input aria-label="Ch 26" id="c18" type="number" min="0" max="100" step="0.01" placeholder="Ch 26" inputmode="decimal">
+                <input aria-label="Urin Anat" id="c19" type="number" min="0" max="100" step="0.01" placeholder="Urin Anat" inputmode="decimal">
+                <input aria-label="Dig Anat" id="c20" type="number" min="0" max="100" step="0.01" placeholder="Dig Anat" inputmode="decimal">
+                <input aria-label="APR U3" id="c21" type="number" min="0" max="100" step="0.01" placeholder="APR U3" inputmode="decimal">
+                <input aria-label="Ch 27" id="c22" type="number" min="0" max="100" step="0.01" placeholder="Ch 27" inputmode="decimal">
+                <input aria-label="Ch 28" id="c23" type="number" min="0" max="100" step="0.01" placeholder="Ch 28" inputmode="decimal">
+                <input aria-label="Ch 4" id="c24" type="number" min="0" max="100" step="0.01" placeholder="Ch 4" inputmode="decimal">
+                <input aria-label="Ch 29" id="c25" type="number" min="0" max="100" step="0.01" placeholder="Ch 29" inputmode="decimal">
+                <input aria-label="Repro Anat" id="c26" type="number" min="0" max="100" step="0.01" placeholder="Repro Anat" inputmode="decimal">
+                <input aria-label="APR U4" id="c27" type="number" min="0" max="100" step="0.01" placeholder="APR U4" inputmode="decimal">
+            </div>
+
+            <div class="box" style="margin-top:12px;">
+                <strong>Connect Average:</strong> <span id="connectAvg">0.00</span>%<br>
+                <strong>Assignments Completed:</strong> <span id="connectCount">0</span> / 26<br>
+                <strong>Connect Contribution:</strong> <span id="connectContrib">0.00</span>%
+            </div>
+        </article>
+
+        <!-- Overall Grade Card -->
+        <article class="card full">
+            <h2>Your Current Grade</h2>
+            
+            <div class="summary-box">
+                <div class="grade-display" id="letterGrade">—</div>
+                <div class="percent-display"><span id="totalPercent">0.00</span>%</div>
+            </div>
+
+            <div class="totals" style="margin-top:16px;">
+                <div class="pill">Unit Tests: <span id="testPill">0.00</span>%</div>
+                <div class="pill">Final: <span id="finalPill">0.00</span>%</div>
+                <div class="pill">Quizzes: <span id="quizPill">0.00</span>%</div>
+                <div class="pill">Connect: <span id="connectPill">0.00</span>%</div>
+                <div class="pill">Participation: <span id="partPill">0.00</span>%</div>
+            </div>
+
+            <div class="box" style="margin-top:12px;">
+                <strong>Points to Next Grade:</strong><br>
+                <span id="nextGrade">—</span>
+            </div>
+
             <div class="btns">
-                <button id="resetAll" type="button">Reset all</button>
+                <button id="resetAll" type="button">Reset All</button>
+                <button id="resetTests" class="secondary" type="button">Reset Tests</button>
+                <button id="resetQuizzes" class="secondary" type="button">Reset Quizzes</button>
+                <button id="resetConnect" class="secondary" type="button">Reset Connect</button>
             </div>
         </article>
     </section>
 </main>
 
-<!-- Footer: summarizes rules and links to the repository -->
 <div class="footer">
-    Logic: Lowest lecture exam will be replaced by the final. One lab quiz is dropped. Thresholds: A 493, B 438, C 383, D 355.
-    &nbsp;|&nbsp;
-    <a href="https://github.com/CalebHendren/micrograde/" target="_blank" rel="noopener">View source on GitHub</a>
+    A&P 2 Grading: Unit Tests 45% | Final 30% | Quizzes 15% | Connect 7% | Participation 3%
+    <br>Letter Grades: A (90-100%) | B (80-89%) | C (70-79%) | D (65-69%) | F (below 65%)
 </div>
 
 <script>
-    // LocalStorage functions
-    function saveToLocalStorage(){
-        const data = {
-            ex1: document.getElementById('ex1').value,
-            ex2: document.getElementById('ex2').value,
-            ex3: document.getElementById('ex3').value,
-            finalLec: document.getElementById('finalLec').value,
-            ecLec: document.getElementById('ecLec').value,
-            q1: document.getElementById('q1').value,
-            q2: document.getElementById('q2').value,
-            q3: document.getElementById('q3').value,
-            q4: document.getElementById('q4').value,
-            q5: document.getElementById('q5').value,
-            q6: document.getElementById('q6').value,
-            q7: document.getElementById('q7').value,
-            q8: document.getElementById('q8').value,
-            q9: document.getElementById('q9').value,
-            q10: document.getElementById('q10').value,
-            task: document.getElementById('task').value,
-            mid: document.getElementById('mid').value,
-            fin: document.getElementById('fin').value,
-            ecLab: document.getElementById('ecLab').value
-        };
-        localStorage.setItem('microGradeFullData', JSON.stringify(data));
+    const gradeData = {};
+
+    function saveData(){
+        const ids = ['test1','test2','test3','final','absences'];
+        for(let i=1;i<=19;i++) ids.push('quiz'+i);
+        for(let i=1;i<=27;i++) ids.push('c'+i);
+        
+        ids.forEach(id => {
+            gradeData[id] = document.getElementById(id).value;
+        });
     }
 
-    function loadFromLocalStorage(){
-        const saved = localStorage.getItem('microGradeFullData');
-        if (saved){
-            try {
-                const data = JSON.parse(saved);
-                Object.keys(data).forEach(key => {
-                    const el = document.getElementById(key);
-                    if (el && data[key]) el.value = data[key];
-                });
-            } catch (e) {
-                console.error('Error loading saved data:', e);
-            }
-        }
+    function loadData(){
+        Object.keys(gradeData).forEach(key => {
+            const el = document.getElementById(key);
+            if (el && gradeData[key]) el.value = gradeData[key];
+        });
     }
 
-    // Utility: read and clamp a numeric <input> by id to [min, max].
-    // - Returns a number (NaN treated as 0).
-    // - If the user enters an out-of-range value, the visible field is corrected.
     function valNum(id, min=0, max=Infinity){
         const el = document.getElementById(id);
+        if (!el) return 0;
         let v = parseFloat(el.value);
-        if (Number.isNaN(v)) v = 0;
+        if (Number.isNaN(v) || el.value === '') return null;
         if (v < min) v = min;
         if (v > max) v = max;
-        // write back clamped visible value only if original was out of range
-        const raw = parseFloat(el.value);
-        if (!Number.isNaN(raw) && (raw < min || raw > max)) el.value = v;
         return v;
     }
 
-    // Compute lecture total with replacement rule.
-    // If final exam (f) > lowest of Exams 1–3, drop that lowest exam and count f twice.
-    // Returns:
-    //   total: number (includes lecture EC)
-    //   replaced: boolean
-    //   replacedIndex: 1..3 or null
-    //   replacedValue: the dropped lowest exam's points
-    //   finalScore: f
-    function calcLecture(){
-        const e1 = valNum('ex1', 0, 100);
-        const e2 = valNum('ex2', 0, 100);
-        const e3 = valNum('ex3', 0, 100);
-        const f  = valNum('finalLec', 0, 100);
-        const ec = valNum('ecLec', 0, 10);
-
-        const exams = [e1, e2, e3];
-        const minExam = Math.min(...exams);
-        let minIdx = exams.indexOf(minExam); // 0-based index for Exam 1..3
-        let replaced = false;
-
-        // totalNoEC includes only exams and final logic (no EC)
-        let totalNoEC;
-        if (f > minExam){
-            // drop the lowest exam and add the final twice
-            totalNoEC = (e1 + e2 + e3 + f) - minExam + f;
-            replaced = true;
-        } else {
-            // no replacement; sum as-is
-            totalNoEC = e1 + e2 + e3 + f;
-        }
-
-        // full lecture total adds EC
-        const total = totalNoEC + ec;
-
-        // Update running total display with percentage
-        document.getElementById('lecRunning').textContent = Math.round(total);
-        document.getElementById('lecPercent').textContent = ((total / 400) * 100).toFixed(2);
-
-        // Replacement message
-        const msg = replaced
-            ? `Final replaces Exam ${minIdx+1} (lowest = ${minExam}).`
-            : 'No replacement. Final not higher than lowest exam.';
-        document.getElementById('lecReplaceMsg').textContent = msg;
-
-        return { total, replaced, replacedIndex: replaced ? (minIdx+1) : null, replacedValue: minExam, finalScore: f };
-    }
-
-    // Compute lab total with "drop lowest quiz" rule.
-    // Returns:
-    //   total: number (includes lab EC)
-    //   droppedQuizIndex: 1..10
-    //   droppedQuizValue: number
-    function calcLab(){
-        // Gather all 10 quiz values in 0..5
-        const qs = [];
-        for (let i=1;i<=10;i++) qs.push(valNum('q'+i, 0, 5));
-
-        // Find lowest quiz; on ties, drop the first occurrence
-        let minVal = qs[0], minIdx = 0;
-        for (let i=1;i<qs.length;i++){
-            if (qs[i] < minVal){ minVal = qs[i]; minIdx = i; }
-        }
-
-        // Best 9 quizzes = total minus the dropped lowest
-        const sumAll = qs.reduce((a,b)=>a+b,0);
-        const best9 = sumAll - minVal;
-
-        // Other lab components
-        const task = valNum('task', 0, 5);
-        const mid  = valNum('mid', 0, 50);
-        const fin  = valNum('fin', 0, 50);
-        const ec   = valNum('ecLab', 0, 5);
-
-        // Total lab points (with EC)
-        const total = best9 + task + mid + fin + ec;
-
-        // Update UI for lab component breakdown
-        document.getElementById('quizBest').textContent = Math.round(best9);
-        document.getElementById('taskOut').textContent = Math.round(task);
-        document.getElementById('midOut').textContent  = Math.round(mid);
-        document.getElementById('finOut').textContent  = Math.round(fin);
-        document.getElementById('labEC').textContent   = Math.round(ec);
-        
-        // Update running total display with percentage
-        document.getElementById('labRunning').textContent = Math.round(total);
-        document.getElementById('labPercent').textContent = ((total / 150) * 100).toFixed(2);
-
-        // Display which quiz was dropped (1-based index)
-        document.getElementById('quizDropMsg').textContent = `Dropped quiz: Quiz ${minIdx+1} (${minVal} pts).`;
-
-        return { total, droppedQuizIndex: minIdx+1, droppedQuizValue: minVal };
-    }
-
-    // Map numeric total to letter grade based on fixed thresholds
-    function letterFromTotal(total){
-        if (total >= 493) return 'A';
-        if (total >= 438) return 'B';
-        if (total >= 383) return 'C';
-        if (total >= 355) return 'D';
+    function getLetterGrade(pct){
+        if (pct >= 90) return 'A';
+        if (pct >= 80) return 'B';
+        if (pct >= 70) return 'C';
+        if (pct >= 65) return 'D';
         return 'F';
     }
 
-    // Aggregate lecture and lab and update all UI outputs
-    function computeOverall(){
-        const lec = calcLecture();
-        const lab = calcLab();
-        const course = lec.total + lab.total;
-
-        // Show course total with percentage
-        document.getElementById('courseTotal').textContent = Math.round(course);
-        document.getElementById('coursePercent').textContent = ((course / 550) * 100).toFixed(2);
-
-        // Current letter grade with color class
-        const letter = letterFromTotal(course);
-        const letterSpan = document.getElementById('letter');
-        letterSpan.textContent = letter;
-        letterSpan.className = '';
-        letterSpan.classList.add(
-            letter === 'A' ? 'ok'
-                : letter === 'B' ? 'good'
-                    : letter === 'C' ? 'warn'
-                        : /* D or F */       'bad'
-        );
-
-        // Compose non-negative "points needed" text per current letter
-        const T = { A:493, B:438, C:383, D:355 };
-        const fmt = (x) => Math.max(0, x).toFixed(2);
-        const lines = [];
-        if (letter === 'A'){
-            lines.push('You have an A.');
-        } else if (letter === 'B'){
-            lines.push(`You have a B. Points to A: ${fmt(T.A - course)}.`);
-        } else if (letter === 'C'){
-            lines.push(`You have a C. Points to B: ${fmt(T.B - course)}, Points to A: ${fmt(T.A - course)}.`);
-        } else if (letter === 'D'){
-            lines.push(`You have a D. Points to C: ${fmt(T.C - course)}, Points to B: ${fmt(T.B - course)}, Points to A: ${fmt(T.A - course)}.`);
-        } else { // F
-            lines.push(`You have an F. Points to D: ${fmt(T.D - course)}, to C: ${fmt(T.C - course)}, to B: ${fmt(T.B - course)}, to A: ${fmt(T.A - course)}.`);
-        }
-        document.getElementById('targets').textContent = lines.join(' ');
+    function calculate(){
+        // Unit Tests (15% each = 45% total)
+        const t1 = valNum('test1', 0, 100);
+        const t2 = valNum('test2', 0, 100);
+        const t3 = valNum('test3', 0, 100);
         
-        // Save to localStorage after each calculation
-        saveToLocalStorage();
+        let testContrib = 0;
+        let testCount = 0;
+        if (t1 !== null) { testContrib += (t1/100) * 15; testCount++; }
+        if (t2 !== null) { testContrib += (t2/100) * 15; testCount++; }
+        if (t3 !== null) { testContrib += (t3/100) * 15; testCount++; }
+
+        // Final Exam (30%)
+        const finalScore = valNum('final', 0, 120);
+        const finalContrib = finalScore !== null ? (finalScore/120) * 30 : 0;
+
+        // Participation (3%)
+        const absences = valNum('absences', 0, 28) || 0;
+        const partPoints = Math.max(0, 28 - absences);
+        const partContrib = (partPoints / 28) * 3;
+
+        // Quizzes (15% total)
+        let quizSum = 0;
+        let quizCount = 0;
+        for(let i=1; i<=19; i++){
+            const q = valNum('quiz'+i, 0, 100);
+            if (q !== null) { quizSum += q; quizCount++; }
+        }
+        const quizAvg = quizCount > 0 ? quizSum / quizCount : 0;
+        const quizContrib = (quizAvg / 100) * 15;
+
+        // Connect (7% total)
+        let connectSum = 0;
+        let connectCount = 0;
+        for(let i=1; i<=27; i++){
+            const c = valNum('c'+i, 0, 100);
+            if (c !== null) { connectSum += c; connectCount++; }
+        }
+        const connectAvg = connectCount > 0 ? connectSum / connectCount : 0;
+        const connectContrib = (connectAvg / 100) * 7;
+
+        // Total percentage
+        const totalPct = testContrib + finalContrib + quizContrib + connectContrib + partContrib;
+
+        // Update UI
+        document.getElementById('testContrib').textContent = testContrib.toFixed(2);
+        document.getElementById('finalContrib').textContent = finalContrib.toFixed(2);
+        document.getElementById('partPoints').textContent = partPoints;
+        document.getElementById('partContrib').textContent = partContrib.toFixed(2);
+        document.getElementById('quizAvg').textContent = quizAvg.toFixed(2);
+        document.getElementById('quizCount').textContent = quizCount;
+        document.getElementById('quizContrib').textContent = quizContrib.toFixed(2);
+        document.getElementById('connectAvg').textContent = connectAvg.toFixed(2);
+        document.getElementById('connectCount').textContent = connectCount;
+        document.getElementById('connectContrib').textContent = connectContrib.toFixed(2);
+
+        document.getElementById('testPill').textContent = testContrib.toFixed(2);
+        document.getElementById('finalPill').textContent = finalContrib.toFixed(2);
+        document.getElementById('quizPill').textContent = quizContrib.toFixed(2);
+        document.getElementById('connectPill').textContent = connectContrib.toFixed(2);
+        document.getElementById('partPill').textContent = partContrib.toFixed(2);
+
+        document.getElementById('totalPercent').textContent = totalPct.toFixed(2);
+
+        const letter = getLetterGrade(totalPct);
+        const letterEl = document.getElementById('letterGrade');
+        letterEl.textContent = letter;
+        letterEl.className = 'grade-display grade-' + letter;
+
+        // Next grade calculation
+        let nextMsg = '';
+        if (letter === 'F') nextMsg = `You need ${(65 - totalPct).toFixed(2)}% more to reach a D.`;
+        else if (letter === 'D') nextMsg = `You need ${(70 - totalPct).toFixed(2)}% more to reach a C.`;
+        else if (letter === 'C') nextMsg = `You need ${(80 - totalPct).toFixed(2)}% more to reach a B.`;
+        else if (letter === 'B') nextMsg = `You need ${(90 - totalPct).toFixed(2)}% more to reach an A.`;
+        else nextMsg = 'You have an A! Great work!';
+        document.getElementById('nextGrade').textContent = nextMsg;
+
+        saveData();
     }
 
-    // Wire input events for all numeric fields to recompute totals live
-    const allInputs = Array.from(document.querySelectorAll('input[type="number"]'));
-    allInputs.forEach(i => i.addEventListener('input', computeOverall));
+    const allInputs = Array.from(document.querySelectorAll('input'));
+    allInputs.forEach(i => i.addEventListener('input', calculate));
 
-    // Helpers to clear specific groups of inputs, then recompute
     function clearInputs(ids){ 
-        ids.forEach(id => document.getElementById(id).value = ''); 
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
     }
 
-    // Reset lecture-only inputs
-    document.getElementById('resetLecture').addEventListener('click', ()=>{
-        clearInputs(['ex1','ex2','ex3','finalLec','ecLec']);
-        saveToLocalStorage();
-        computeOverall();
-    });
-
-    // Reset lab-only inputs
-    document.getElementById('resetLab').addEventListener('click', ()=>{
-        clearInputs(['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','task','mid','fin','ecLab']);
-        saveToLocalStorage();
-        computeOverall();
-    });
-
-    // Reset all inputs in one action
     document.getElementById('resetAll').addEventListener('click', ()=>{
-        clearInputs(['ex1','ex2','ex3','finalLec','ecLec','q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','task','mid','fin','ecLab']);
-        localStorage.removeItem('microGradeFullData');
-        computeOverall();
+        const ids = ['test1','test2','test3','final','absences'];
+        for(let i=1;i<=19;i++) ids.push('quiz'+i);
+        for(let i=1;i<=27;i++) ids.push('c'+i);
+        clearInputs(ids);
+        Object.keys(gradeData).forEach(k => delete gradeData[k]);
+        calculate();
     });
 
-    // Load saved data and initial compute to populate all outputs on page load
-    loadFromLocalStorage();
-    computeOverall();
+    document.getElementById('resetTests').addEventListener('click', ()=>{
+        clearInputs(['test1','test2','test3','final']);
+        calculate();
+    });
+
+    document.getElementById('resetQuizzes').addEventListener('click', ()=>{
+        const ids = [];
+        for(let i=1;i<=19;i++) ids.push('quiz'+i);
+        clearInputs(ids);
+        calculate();
+    });
+
+    document.getElementById('resetConnect').addEventListener('click', ()=>{
+        const ids = [];
+        for(let i=1;i<=27;i++) ids.push('c'+i);
+        clearInputs(ids);
+        calculate();
+    });
+
+    loadData();
+    calculate();
 </script>
 </body>
 </html>

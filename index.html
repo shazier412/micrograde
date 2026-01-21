@@ -118,13 +118,55 @@
             font-size:24px;
             color: var(--muted);
         }
+        .milestone-label{
+            font-size:14px;
+            color: var(--purple);
+            font-weight:600;
+            margin-top:8px;
+        }
+        .grade-grid{
+            display:grid;
+            grid-template-columns: 1fr 1fr;
+            gap:16px;
+            margin-top:12px;
+        }
+        @media (max-width: 768px){
+            .grade-grid{grid-template-columns: 1fr;}
+        }
+        .grade-card{
+            background: var(--bg-soft);
+            border:1px solid var(--line);
+            border-radius:10px;
+            padding:14px;
+            text-align:center;
+        }
+        .grade-card h3{
+            margin:0 0 8px;
+            font-size:16px;
+            color: var(--cyan);
+        }
+        .grade-card .big-grade{
+            font-size:36px;
+            font-weight:800;
+            margin:8px 0;
+        }
+        .grade-card .big-percent{
+            font-size:20px;
+            color: var(--muted);
+        }
+        .explanation{
+            font-size:12px;
+            color: var(--comment);
+            margin-top:8px;
+            line-height:1.5;
+        }
     </style>
 </head>
 <body>
 <header>
     <div class="wrap">
         <h1>Anatomy & Physiology 2 Grade Calculator</h1>
-        <div class="sub">Enter your scores to calculate your current grade and see what you need for your target letter grade.</div>
+        <div class="sub">Enter your scores to see your milestone grade (current standing) and projected final grade.</div>
     </div>
 </header>
 
@@ -149,7 +191,9 @@
             </div>
 
             <div class="box">
-                <strong>Unit Tests Contribution:</strong> <span id="testContrib">0.00</span>%
+                <strong>Tests Completed:</strong> <span id="testCount">0</span> / 3<br>
+                <strong>Tests Average:</strong> <span id="testAvg">0.00</span>%<br>
+                <strong>Current Contribution:</strong> <span id="testContrib">0.00</span>%
             </div>
         </article>
 
@@ -164,7 +208,8 @@
             </div>
 
             <div class="box">
-                <strong>Final Exam Contribution:</strong> <span id="finalContrib">0.00</span>%
+                <strong>Final Score:</strong> <span id="finalScore">Not taken</span><br>
+                <strong>Current Contribution:</strong> <span id="finalContrib">0.00</span>%
             </div>
 
             <h2 style="margin-top:20px;">Participation (3%)</h2>
@@ -177,7 +222,7 @@
 
             <div class="box">
                 <strong>Participation Points:</strong> <span id="partPoints">28</span> / 28<br>
-                <strong>Participation Contribution:</strong> <span id="partContrib">3.00</span>%
+                <strong>Current Contribution:</strong> <span id="partContrib">3.00</span>%
             </div>
         </article>
 
@@ -209,9 +254,9 @@
             </div>
 
             <div class="box" style="margin-top:12px;">
-                <strong>Quiz Average:</strong> <span id="quizAvg">0.00</span>%<br>
                 <strong>Quizzes Completed:</strong> <span id="quizCount">0</span> / 19<br>
-                <strong>Quiz Contribution:</strong> <span id="quizContrib">0.00</span>%
+                <strong>Quiz Average:</strong> <span id="quizAvg">0.00</span>%<br>
+                <strong>Current Contribution:</strong> <span id="quizContrib">0.00</span>%
             </div>
         </article>
 
@@ -252,31 +297,50 @@
             </div>
 
             <div class="box" style="margin-top:12px;">
-                <strong>Connect Average:</strong> <span id="connectAvg">0.00</span>%<br>
                 <strong>Assignments Completed:</strong> <span id="connectCount">0</span> / 26<br>
-                <strong>Connect Contribution:</strong> <span id="connectContrib">0.00</span>%
+                <strong>Connect Average:</strong> <span id="connectAvg">0.00</span>%<br>
+                <strong>Current Contribution:</strong> <span id="connectContrib">0.00</span>%
             </div>
         </article>
 
         <!-- Overall Grade Card -->
         <article class="card full">
-            <h2>Your Current Grade</h2>
+            <h2>Your Grades</h2>
             
-            <div class="summary-box">
-                <div class="grade-display" id="letterGrade">—</div>
-                <div class="percent-display"><span id="totalPercent">0.00</span>%</div>
+            <div class="grade-grid">
+                <!-- Milestone Grade -->
+                <div class="grade-card">
+                    <h3>📊 Milestone Grade</h3>
+                    <div class="explanation">Your grade based only on completed work</div>
+                    <div class="big-grade" id="milestoneLetter">—</div>
+                    <div class="big-percent"><span id="milestonePercent">0.00</span>%</div>
+                    <div class="explanation" style="margin-top:12px;">
+                        Based on <span id="completedWeight">0.00</span>% of total course weight
+                    </div>
+                </div>
+
+                <!-- Projected Final Grade -->
+                <div class="grade-card">
+                    <h3>🎯 Projected Final Grade</h3>
+                    <div class="explanation">If you score 0% on remaining work</div>
+                    <div class="big-grade" id="projectedLetter">—</div>
+                    <div class="big-percent"><span id="projectedPercent">0.00</span>%</div>
+                    <div class="explanation" style="margin-top:12px;">
+                        This is your worst-case final grade
+                    </div>
+                </div>
             </div>
 
             <div class="totals" style="margin-top:16px;">
-                <div class="pill">Unit Tests: <span id="testPill">0.00</span>%</div>
-                <div class="pill">Final: <span id="finalPill">0.00</span>%</div>
-                <div class="pill">Quizzes: <span id="quizPill">0.00</span>%</div>
-                <div class="pill">Connect: <span id="connectPill">0.00</span>%</div>
-                <div class="pill">Participation: <span id="partPill">0.00</span>%</div>
+                <div class="pill">Unit Tests: <span id="testPill">0.00</span>% of 45%</div>
+                <div class="pill">Final: <span id="finalPill">0.00</span>% of 30%</div>
+                <div class="pill">Quizzes: <span id="quizPill">0.00</span>% of 15%</div>
+                <div class="pill">Connect: <span id="connectPill">0.00</span>% of 7%</div>
+                <div class="pill">Participation: <span id="partPill">0.00</span>% of 3%</div>
             </div>
 
             <div class="box" style="margin-top:12px;">
-                <strong>Points to Next Grade:</strong><br>
+                <strong>Next Grade Thresholds:</strong><br>
                 <span id="nextGrade">—</span>
             </div>
 
@@ -317,7 +381,7 @@
 
     function valNum(id, min=0, max=Infinity){
         const el = document.getElementById(id);
-        if (!el) return 0;
+        if (!el) return null;
         let v = parseFloat(el.value);
         if (Number.isNaN(v) || el.value === '') return null;
         if (v < min) v = min;
@@ -335,24 +399,31 @@
 
     function calculate(){
         // Unit Tests (15% each = 45% total)
-        const t1 = valNum('test1', 0, 100);
-        const t2 = valNum('test2', 0, 100);
-        const t3 = valNum('test3', 0, 100);
+        const tests = [
+            valNum('test1', 0, 100),
+            valNum('test2', 0, 100),
+            valNum('test3', 0, 100)
+        ];
         
-        let testContrib = 0;
+        let testSum = 0;
         let testCount = 0;
-        if (t1 !== null) { testContrib += (t1/100) * 15; testCount++; }
-        if (t2 !== null) { testContrib += (t2/100) * 15; testCount++; }
-        if (t3 !== null) { testContrib += (t3/100) * 15; testCount++; }
+        tests.forEach(t => {
+            if (t !== null) { testSum += t; testCount++; }
+        });
+        const testAvg = testCount > 0 ? testSum / testCount : 0;
+        const testContrib = testCount > 0 ? (testAvg / 100) * 15 * testCount : 0;
+        const testWeightEarned = testCount * 15;
 
         // Final Exam (30%)
         const finalScore = valNum('final', 0, 120);
-        const finalContrib = finalScore !== null ? (finalScore/120) * 30 : 0;
+        const finalContrib = finalScore !== null ? (finalScore / 120) * 30 : 0;
+        const finalWeightEarned = finalScore !== null ? 30 : 0;
 
-        // Participation (3%)
+        // Participation (3%) - always counts as completed
         const absences = valNum('absences', 0, 28) || 0;
         const partPoints = Math.max(0, 28 - absences);
         const partContrib = (partPoints / 28) * 3;
+        const partWeightEarned = 3;
 
         // Quizzes (15% total)
         let quizSum = 0;
@@ -362,7 +433,8 @@
             if (q !== null) { quizSum += q; quizCount++; }
         }
         const quizAvg = quizCount > 0 ? quizSum / quizCount : 0;
-        const quizContrib = (quizAvg / 100) * 15;
+        const quizContrib = quizCount > 0 ? (quizAvg / 100) * 15 : 0;
+        const quizWeightEarned = quizCount > 0 ? 15 : 0;
 
         // Connect (7% total)
         let connectSum = 0;
@@ -372,43 +444,75 @@
             if (c !== null) { connectSum += c; connectCount++; }
         }
         const connectAvg = connectCount > 0 ? connectSum / connectCount : 0;
-        const connectContrib = (connectAvg / 100) * 7;
+        const connectContrib = connectCount > 0 ? (connectAvg / 100) * 7 : 0;
+        const connectWeightEarned = connectCount > 0 ? 7 : 0;
 
-        // Total percentage
-        const totalPct = testContrib + finalContrib + quizContrib + connectContrib + partContrib;
+        // Calculate milestone grade (based only on completed work)
+        const totalWeightCompleted = testWeightEarned + finalWeightEarned + quizWeightEarned + connectWeightEarned + partWeightEarned;
+        const totalPointsEarned = testContrib + finalContrib + quizContrib + connectContrib + partContrib;
+        const milestonePct = totalWeightCompleted > 0 ? (totalPointsEarned / totalWeightCompleted) * 100 : 0;
 
-        // Update UI
+        // Calculate projected final grade (assuming 0% on remaining work)
+        const projectedPct = totalPointsEarned;
+
+        // Update UI - Component details
+        document.getElementById('testCount').textContent = testCount;
+        document.getElementById('testAvg').textContent = testAvg.toFixed(2);
         document.getElementById('testContrib').textContent = testContrib.toFixed(2);
+        
+        document.getElementById('finalScore').textContent = finalScore !== null ? `${finalScore} / 120` : 'Not taken';
         document.getElementById('finalContrib').textContent = finalContrib.toFixed(2);
+        
         document.getElementById('partPoints').textContent = partPoints;
         document.getElementById('partContrib').textContent = partContrib.toFixed(2);
-        document.getElementById('quizAvg').textContent = quizAvg.toFixed(2);
+        
         document.getElementById('quizCount').textContent = quizCount;
+        document.getElementById('quizAvg').textContent = quizAvg.toFixed(2);
         document.getElementById('quizContrib').textContent = quizContrib.toFixed(2);
-        document.getElementById('connectAvg').textContent = connectAvg.toFixed(2);
+        
         document.getElementById('connectCount').textContent = connectCount;
+        document.getElementById('connectAvg').textContent = connectAvg.toFixed(2);
         document.getElementById('connectContrib').textContent = connectContrib.toFixed(2);
 
+        // Update pills
         document.getElementById('testPill').textContent = testContrib.toFixed(2);
         document.getElementById('finalPill').textContent = finalContrib.toFixed(2);
         document.getElementById('quizPill').textContent = quizContrib.toFixed(2);
         document.getElementById('connectPill').textContent = connectContrib.toFixed(2);
         document.getElementById('partPill').textContent = partContrib.toFixed(2);
 
-        document.getElementById('totalPercent').textContent = totalPct.toFixed(2);
+        // Update milestone grade
+        document.getElementById('milestonePercent').textContent = milestonePct.toFixed(2);
+        document.getElementById('completedWeight').textContent = totalWeightCompleted.toFixed(0);
+        const milestoneLetter = getLetterGrade(milestonePct);
+        const milestoneEl = document.getElementById('milestoneLetter');
+        milestoneEl.textContent = milestoneLetter;
+        milestoneEl.className = 'big-grade grade-' + milestoneLetter;
 
-        const letter = getLetterGrade(totalPct);
-        const letterEl = document.getElementById('letterGrade');
-        letterEl.textContent = letter;
-        letterEl.className = 'grade-display grade-' + letter;
+        // Update projected grade
+        document.getElementById('projectedPercent').textContent = projectedPct.toFixed(2);
+        const projectedLetter = getLetterGrade(projectedPct);
+        const projectedEl = document.getElementById('projectedLetter');
+        projectedEl.textContent = projectedLetter;
+        projectedEl.className = 'big-grade grade-' + projectedLetter;
 
-        // Next grade calculation
+        // Next grade calculation (based on milestone)
         let nextMsg = '';
-        if (letter === 'F') nextMsg = `You need ${(65 - totalPct).toFixed(2)}% more to reach a D.`;
-        else if (letter === 'D') nextMsg = `You need ${(70 - totalPct).toFixed(2)}% more to reach a C.`;
-        else if (letter === 'C') nextMsg = `You need ${(80 - totalPct).toFixed(2)}% more to reach a B.`;
-        else if (letter === 'B') nextMsg = `You need ${(90 - totalPct).toFixed(2)}% more to reach an A.`;
-        else nextMsg = 'You have an A! Great work!';
+        if (milestoneLetter === 'F') {
+            const ptsNeeded = 65 - milestonePct;
+            nextMsg = `Milestone: You need ${ptsNeeded.toFixed(2)}% more to reach a D.`;
+        } else if (milestoneLetter === 'D') {
+            const ptsNeeded = 70 - milestonePct;
+            nextMsg = `Milestone: You need ${ptsNeeded.toFixed(2)}% more to reach a C.`;
+        } else if (milestoneLetter === 'C') {
+            const ptsNeeded = 80 - milestonePct;
+            nextMsg = `Milestone: You need ${ptsNeeded.toFixed(2)}% more to reach a B.`;
+        } else if (milestoneLetter === 'B') {
+            const ptsNeeded = 90 - milestonePct;
+            nextMsg = `Milestone: You need ${ptsNeeded.toFixed(2)}% more to reach an A.`;
+        } else {
+            nextMsg = 'Milestone: You have an A! Great work!';
+        }
         document.getElementById('nextGrade').textContent = nextMsg;
 
         saveData();
